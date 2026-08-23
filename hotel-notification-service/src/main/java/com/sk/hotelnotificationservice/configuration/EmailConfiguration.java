@@ -1,5 +1,6 @@
 package com.sk.hotelnotificationservice.configuration;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -9,24 +10,34 @@ import java.util.Properties;
 
 @Configuration
 public class EmailConfiguration {
+
+    @Value("${mail.host}")
+    private String host;
+    @Value("${mail.port}")
+    private int port;
+    @Value("${mail.username}")
+    private String username;
+    @Value("${mail.password}")
+    private String password;
+
     @Bean
     public JavaMailSender mailSender(){
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
-        mailSender.setHost("smtp.gmail.com");
-        mailSender.setPort(587);
+        mailSender.setHost(host);
+        mailSender.setPort(port);
 
-        mailSender.setUsername("hotelnotificationservice@gmail.com");
-        mailSender.setPassword("hotel-notification-service");
+        mailSender.setUsername(username);
+        mailSender.setPassword(password);
 
         Properties props = mailSender.getJavaMailProperties();
         props.put("mail.transport.protocol", "smtp");
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", "true");
-        props.put("mail.debug", "true");
+        props.put("mail.debug", "false");
 
         props.put("mail.smtp.ssl.protocols", "TLSv1.2");
-        props.put("mail.smtp.port", "587");
-        props.put("mail.smtp.ssl.trust", "smtp.gmail.com");
+        props.put("mail.smtp.port", String.valueOf(port));
+        props.put("mail.smtp.ssl.trust", host);
 
         return mailSender;
     }

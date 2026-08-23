@@ -26,7 +26,6 @@ public class TestDataRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        //Insert roles
         Role roleClient = new Role("ROLE_CLIENT", "Client role");
         Role roleAdmin = new Role("ROLE_ADMIN", "Admin role");
         Role roleManager = new Role("ROLE_MANAGER", "Manager_role");
@@ -34,7 +33,6 @@ public class TestDataRunner implements CommandLineRunner {
         roleRepository.save(roleClient);
         roleRepository.save(roleAdmin);
         roleRepository.save(roleManager);
-        //Insert admin
         User admin = new User();
         admin.setEmail("admin@gmail.com");
         admin.setUsername("admin");

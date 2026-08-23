@@ -16,10 +16,8 @@ public class UserDto {
     private String username;
     private LocalDate birthDate;
     private String phone;
-    //for clients
     private String passportNumber;
     private Integer numberOfReservations;
-    //for managers
     private String hotelName;
     private LocalDate hireDate;
 

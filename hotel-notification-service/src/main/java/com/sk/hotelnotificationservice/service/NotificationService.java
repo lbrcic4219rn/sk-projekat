@@ -4,12 +4,10 @@ import com.sk.hotelnotificationservice.domain.Notification;
 import com.sk.hotelnotificationservice.dto.NotificationDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.util.List;
 
-@Component
 public interface NotificationService {
     List<Notification> findNotificationsInDateRange(Instant endDate, Instant startDate);
     List<Notification> findNotificationsByEmail(String email);

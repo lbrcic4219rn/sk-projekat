@@ -1,5 +1,7 @@
 package com.sk.hotelnotificationservice.security;
 
+import lombok.extern.slf4j.Slf4j;
+
 import lombok.RequiredArgsConstructor;
 
 import com.sk.hotelnotificationservice.security.service.TokenService;
@@ -17,6 +19,7 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Optional;
 
+@Slf4j
 @RequiredArgsConstructor
 @Aspect
 @Configuration
@@ -29,38 +32,31 @@ public class SecurityAspect {
 
     @Around("@annotation(com.sk.hotelnotificationservice.security.CheckSecurity)")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
-        //Get method signature
         MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         Method method = methodSignature.getMethod();
-        //Check for authorization parameter
         String token = null;
         for (int i = 0; i < methodSignature.getParameterNames().length; i++) {
-            if (methodSignature.getParameterNames()[i].equals("authorization")) {
-                //Check bearer schema
-                if (joinPoint.getArgs()[i].toString().startsWith("Bearer")) {
-                    //Get token
-                    token = joinPoint.getArgs()[i].toString().split(" ")[1];
-                }
+            if (methodSignature.getParameterNames()[i].equals("authorization")
+                    && joinPoint.getArgs()[i].toString().startsWith("Bearer")) {
+                token = joinPoint.getArgs()[i].toString().split(" ")[1];
             }
         }
-        //If token is not presents return UNAUTHORIZED response
         if (token == null) {
+            log.warn("Rejected request to {}: missing bearer token", method.getName());
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
-        //Try to parse token
         Optional<Claims> parsedClaims = tokenService.parseToken(token);
-        //If fails return UNAUTHORIZED response
         if (parsedClaims.isEmpty()) {
+            log.warn("Rejected request to {}: invalid token", method.getName());
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         Claims claims = parsedClaims.get();
-        //Check user role and proceed if user has appropriate role for specified route
         CheckSecurity checkSecurity = method.getAnnotation(CheckSecurity.class);
         String role = claims.get("role", String.class);
         if (Arrays.asList(checkSecurity.roles()).contains(role)) {
             return joinPoint.proceed();
         }
-        //Return FORBIDDEN if user has't appropriate role for specified route
+        log.warn("Rejected request to {}: role {} not permitted", method.getName(), role);
         return new ResponseEntity<>(HttpStatus.FORBIDDEN);
     }
 

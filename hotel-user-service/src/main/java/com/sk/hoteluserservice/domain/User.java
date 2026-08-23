@@ -23,12 +23,9 @@ public class User {
     private String lastname;
     @ManyToOne(optional = false)
     private Role role;
-    //for clients
     private String passportNumber;
     private Integer numberOfReservations;
-    //for managers
     private String hotelName;
     private LocalDate hireDate;
-    //for admin to set
     private boolean blocked = false;
 }

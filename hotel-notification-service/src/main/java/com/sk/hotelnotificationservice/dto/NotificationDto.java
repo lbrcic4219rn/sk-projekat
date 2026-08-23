@@ -12,23 +12,13 @@ import java.time.Instant;
 @Setter
 public class NotificationDto {
     private Long userId;
-    private String to;//email
+    private String to;
     private String subject;
-    private String type;//ACTIVATION_EMAIL, RESET_PASSWORD_EMAIL, SUCCESSFUL_RESERVATION_EMAIL, CANCEL_RESERVATION_EMAIL, TWO_DAYS_REMINDER_EMAIL
+    private String type;
     private String userFirstName;
     private String userLastName;
     private String managerFirstName;
     private String managerLastName;
     private String managerEmail;
     private Instant reservationTime;
-
-    public NotificationDto(Long userId, String to, String subject, String type, String userFirstName, String userLastName) {
-        this.userId = userId;
-        this.to = to;
-        this.subject = subject;
-        this.type = type;
-        this.userFirstName = userFirstName;
-        this.userLastName = userLastName;
-    }
-
 }

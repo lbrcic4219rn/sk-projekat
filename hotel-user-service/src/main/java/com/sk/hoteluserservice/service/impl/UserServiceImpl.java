@@ -1,5 +1,7 @@
 package com.sk.hoteluserservice.service.impl;
 
+import lombok.extern.slf4j.Slf4j;
+
 import lombok.RequiredArgsConstructor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -25,10 +27,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 @Transactional
 public class UserServiceImpl implements UserService {
+
+    private static final String USER_NOT_FOUND_BY_ID = "User with id: %d not found.";
+    private static final String USER_NOT_FOUND_BY_CREDENTIALS = "User with username: %s and password: %s not found.";
 
     private final TokenService tokenService;
     private final UserRepository userRepository;
@@ -50,13 +56,12 @@ public class UserServiceImpl implements UserService {
     public UserDto addClient(ClientCreateDto clientCreateDto) {
         User user = userMapper.clientCreateDtoToUserClient(clientCreateDto);
         userRepository.save(user);
-        //send message to the notification service
         try {
             jmsTemplate.convertAndSend(userRegistratedMessageDestination,
                     objectMapper.writeValueAsString(new NotificationDto(user.getId(), user.getEmail(), "activation email",
                             "ACTIVATION_EMAIL", user.getFirstname(), user.getLastname())));
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            log.error("Failed to serialize notification for user {}", user.getId(), e);
         }
         return userMapper.userToUserDto(user);
     }
@@ -64,35 +69,31 @@ public class UserServiceImpl implements UserService {
     public UserDto addManager(ManagerCreateDto managerCreateDto) {
         User user = userMapper.managerCreateDtoToUserManager(managerCreateDto);
         userRepository.save(user);
-        //send message to the notification service
         try {
             jmsTemplate.convertAndSend(userRegistratedMessageDestination,
                     objectMapper.writeValueAsString(new NotificationDto(user.getId(), user.getEmail(), "activation email",
                             "ACTIVATION_EMAIL", user.getFirstname(), user.getLastname())));
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            log.error("Failed to serialize notification for user {}", user.getId(), e);
         }
         return userMapper.userToUserDto(user);
     }
 
     @Override
     public TokenResponseDto login(TokenRequestDto tokenRequestDto) {
-        //Try to find active user for specified credentials
         User user = userRepository
                 .findUserByUsernameAndPassword(tokenRequestDto.getUsername(), tokenRequestDto.getPassword())
                 .orElseThrow(() -> new NotFoundException(String
-                        .format("User with username: %s and password: %s not found.", tokenRequestDto.getUsername(),
+                        .format(USER_NOT_FOUND_BY_CREDENTIALS, tokenRequestDto.getUsername(),
                                 tokenRequestDto.getPassword())));
         if(user.isBlocked()){
-            System.out.println("User with username:" +  tokenRequestDto.getUsername() + " and email: " + user.getEmail() + " is blocked");
+            log.warn("Blocked user attempted login: username={}, email={}", tokenRequestDto.getUsername(), user.getEmail());
             return null;
         }
-        //Create token payload
         Claims claims = Jwts.claims()
                 .add("id", user.getId())
                 .add("role", user.getRole().getName())
                 .build();
-        //Generate token
         return new TokenResponseDto(tokenService.generate(claims));
     }
 
@@ -112,7 +113,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepository
                 .findUserByUsernameAndPassword(managerUpdateDto.getOldUsername(), managerUpdateDto.getOldPassword())
                 .orElseThrow(() -> new NotFoundException(String
-                        .format("User with username: %s and password: %s not found.", managerUpdateDto.getOldUsername(),
+                        .format(USER_NOT_FOUND_BY_CREDENTIALS, managerUpdateDto.getOldUsername(),
                                 managerUpdateDto.getOldPassword())));
         user.setUsername(managerUpdateDto.getNewUsername());
         user.setPassword(managerUpdateDto.getNewPassword());
@@ -131,7 +132,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepository
                 .findUserByUsernameAndPassword(clientUpdateDto.getOldUsername(), clientUpdateDto.getOldPassword())
                 .orElseThrow(() -> new NotFoundException(String
-                        .format("User with username: %s and password: %s not found.", clientUpdateDto.getOldUsername(),
+                        .format(USER_NOT_FOUND_BY_CREDENTIALS, clientUpdateDto.getOldUsername(),
                                 clientUpdateDto.getOldPassword())));
         user.setUsername(clientUpdateDto.getNewUsername());
         user.setPassword(clientUpdateDto.getNewPassword());
@@ -150,7 +151,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepository
                 .findById(id)
                 .orElseThrow(() -> new NotFoundException(String
-                        .format("User with id: %d not found.", id)));
+                        .format(USER_NOT_FOUND_BY_ID, id)));
         List<ClientRank> clientRankList = clientRankRepository.findAll();
 
         Integer discount = clientRankList.stream()
@@ -164,7 +165,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Boolean incrementReservations(String authorization) {
-        //auth[0] = "Bearer" -> zato splitujemo authorization
         String[] auth = authorization.split(" ");
         String token = auth[1];
         Claims claims = tokenService.parseToken(token)
@@ -175,7 +175,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepository
                 .findById(userId)
                 .orElseThrow(() -> new NotFoundException(String
-                        .format("User with id: %d not found.", userId)));
+                        .format(USER_NOT_FOUND_BY_ID, userId)));
         user.setNumberOfReservations(user.getNumberOfReservations() + 1);
         userRepository.save(user);
         return true;
@@ -183,7 +183,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Boolean decrementReservations(String authorization) {
-        //auth[0] = "Bearer" -> zato splitujemo authorization
         String[] auth = authorization.split(" ");
         String token = auth[1];
         Claims claims = tokenService.parseToken(token)
@@ -194,7 +193,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepository
                 .findById(userId)
                 .orElseThrow(() -> new NotFoundException(String
-                        .format("User with id: %d not found.", userId)));
+                        .format(USER_NOT_FOUND_BY_ID, userId)));
         user.setNumberOfReservations(user.getNumberOfReservations() - 1);
         userRepository.save(user);
         return true;
@@ -202,7 +201,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto findById(Long id) {
-        User user = userRepository.findById(id).get();
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException(String.format(USER_NOT_FOUND_BY_ID, id)));
         return userMapper.userToUserDto(user);
     }
 
