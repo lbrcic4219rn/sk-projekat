@@ -1,0 +1,92 @@
+services:
+
+  activemq:
+    image: apache/activemq-classic:6.1.4
+    container_name: hotel-activemq
+    ports:
+      - "61616:61616"
+      - "8161:8161"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/61616' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  eureka:
+    build:
+      context: .
+      dockerfile: hotel-eureka-service/Dockerfile
+    container_name: hotel-eureka
+    ports:
+      - "8761:8761"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/8761' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  users:
+    build:
+      context: .
+      dockerfile: hotel-user-service/Dockerfile
+    container_name: hotel-users
+    ports:
+      - "8080:8080"
+    environment:
+      EUREKA_URI: http://eureka:8761/eureka
+      AMQ_URL: tcp://activemq:61616
+    depends_on:
+      eureka:
+        condition: service_healthy
+      activemq:
+        condition: service_healthy
+
+  reservations:
+    build:
+      context: .
+      dockerfile: hotel-reservation-service/Dockerfile
+    container_name: hotel-reservations
+    ports:
+      - "8082:8082"
+    environment:
+      EUREKA_URI: http://eureka:8761/eureka
+    depends_on:
+      eureka:
+        condition: service_healthy
+
+  notifications:
+    build:
+      context: .
+      dockerfile: hotel-notification-service/Dockerfile
+    container_name: hotel-notifications
+    ports:
+      - "8081:8081"
+    environment:
+      EUREKA_URI: http://eureka:8761/eureka
+      AMQ_URL: tcp://activemq:61616
+      USER_SERVICE_URI: http://users:8080/api
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+    depends_on:
+      eureka:
+        condition: service_healthy
+      activemq:
+        condition: service_healthy
+
+  gateway:
+    build:
+      context: .
+      dockerfile: hotel-api-gateway-service/Dockerfile
+    container_name: hotel-gateway
+    ports:
+      - "8083:8083"
+    environment:
+      EUREKA_URI: http://eureka:8761/eureka
+      USER_SERVICE_URI: http://users:8080
+      NOTIFICATION_SERVICE_URI: http://notifications:8081
+      RESERVATION_SERVICE_URI: http://reservations:8082
+    depends_on:
+      eureka:
+        condition: service_healthy

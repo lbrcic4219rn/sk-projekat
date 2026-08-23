@@ -28,7 +28,7 @@ public class TestDataRunner implements CommandLineRunner {
     public void run(String... args) {
         Role roleClient = new Role("ROLE_CLIENT", "Client role");
         Role roleAdmin = new Role("ROLE_ADMIN", "Admin role");
-        Role roleManager = new Role("ROLE_MANAGER", "Manager_role");
+        Role roleManager = new Role("ROLE_MANAGER", "Manager role");
 
         roleRepository.save(roleClient);
         roleRepository.save(roleAdmin);

@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
 
 @Builder
-public record UserForbiddDto(
+public record UserForbidDto(
         @Email String email,
         @NotBlank String username,
         boolean blocked) {

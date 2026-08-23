@@ -2,9 +2,7 @@ package com.sk.hoteluserservice.mapper;
 
 
 import com.sk.hoteluserservice.domain.User;
-import org.springframework.http.HttpStatus;
-import com.sk.hoteluserservice.exception.ErrorCode;
-import com.sk.hoteluserservice.exception.CustomException;
+import com.sk.hoteluserservice.exception.ConfigurationException;
 import com.sk.hoteluserservice.domain.Role;
 import com.sk.hoteluserservice.dto.ClientCreateDto;
 import com.sk.hoteluserservice.dto.ManagerCreateDto;
@@ -74,8 +72,7 @@ public record UserMapper(RoleRepository roleRepository) {
 
         private Role role(String name) {
             return roleRepository.findRoleByName(name)
-                    .orElseThrow(() -> new CustomException(
-                            String.format("Role %s is not configured.", name),
-                            ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.INTERNAL_SERVER_ERROR));
+                    .orElseThrow(() -> new ConfigurationException(
+                            String.format("Role %s is not configured.", name)));
         }
 }

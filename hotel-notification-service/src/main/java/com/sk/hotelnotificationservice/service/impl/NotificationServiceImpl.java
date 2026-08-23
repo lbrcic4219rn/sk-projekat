@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 
 import com.sk.hotelnotificationservice.domain.Notification;
+import com.sk.hotelnotificationservice.domain.NotificationType;
+import com.sk.hotelnotificationservice.exception.InvalidTokenException;
 import com.sk.hotelnotificationservice.domain.Reservation;
 import com.sk.hotelnotificationservice.dto.NotificationDto;
 import com.sk.hotelnotificationservice.repository.NotificationRepository;
@@ -33,8 +35,8 @@ import java.util.List;
 public class NotificationServiceImpl implements NotificationService{
 
     private static final String FROM_ADDRESS = "hotelnotificationservice@gmail.com";
-    private static final String GREETING = "Pozdrav ";
-    private static final String EMAIL_SENT_LOG = "Email sent to {}";
+    private static final String GREETING = "Hello ";
+    private static final String EMAIL_SENT_LOG = "{} sent to {} ({})";
 
     private final NotificationRepository notificationRepository;
     private final ReservationRepository reservationRepository;
@@ -66,7 +68,7 @@ public class NotificationServiceImpl implements NotificationService{
         String[] auth = authorization.split(" ");
         String token = auth[1];
         Claims claims = tokenService.parseToken(token)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid token."));
+                .orElseThrow(() -> new InvalidTokenException("Invalid token."));
         Integer intId = claims.get("id", Integer.class);
         Long userId = Long.valueOf(intId);
 
@@ -87,12 +89,12 @@ public class NotificationServiceImpl implements NotificationService{
         message.setFrom(FROM_ADDRESS);
         message.setTo(dto.to());
         message.setSubject(dto.subject());
-        String content = GREETING + dto.userFirstName() + " " + dto.userLastName() + ", \n" + "Kliknite na link za aktiviranje naloga.";
+        String content = GREETING + dto.userFirstName() + " " + dto.userLastName() + ", \n" + "Click the link to activate your account.";
         message.setText(content);
         mailSender.send(message);
-        log.info(EMAIL_SENT_LOG, Arrays.toString(message.getTo()));
+        log.info(EMAIL_SENT_LOG, NotificationType.ACTIVATION, Arrays.toString(message.getTo()), "client");
 
-        Notification notification = new Notification(dto.userId(), dto.to(), dto.subject(), content, "ACTIVATION_EMAIL", Instant.now());
+        Notification notification = new Notification(dto.userId(), dto.to(), dto.subject(), content, NotificationType.ACTIVATION, Instant.now());
         notificationRepository.save(notification);
     }
 
@@ -102,12 +104,12 @@ public class NotificationServiceImpl implements NotificationService{
         message.setFrom(FROM_ADDRESS);
         message.setTo(dto.to());
         message.setSubject(dto.subject());
-        String content = GREETING + dto.userFirstName() + " " + dto.userLastName() + ", \n" + "Uspesno ste resetovali svoju lozinku.";
+        String content = GREETING + dto.userFirstName() + " " + dto.userLastName() + ", \n" + "You have successfully reset your password.";
         message.setText(content);
         mailSender.send(message);
-        log.info(EMAIL_SENT_LOG, Arrays.toString(message.getTo()));
+        log.info(EMAIL_SENT_LOG, NotificationType.RESET_PASSWORD, Arrays.toString(message.getTo()), "client");
 
-        Notification notification = new Notification(dto.userId(), dto.to(), dto.subject(), content, "RESET_PASSWORD_EMAIL", Instant.now());
+        Notification notification = new Notification(dto.userId(), dto.to(), dto.subject(), content, NotificationType.RESET_PASSWORD, Instant.now());
         notificationRepository.save(notification);
     }
 
@@ -117,12 +119,12 @@ public class NotificationServiceImpl implements NotificationService{
         message.setFrom(FROM_ADDRESS);
         message.setTo(dto.to());
         message.setSubject(dto.subject());
-        String content = GREETING + dto.userFirstName() + " " + dto.userLastName() + ", \n" + "Uspesno ste rezervisali smestaj.";
+        String content = GREETING + dto.userFirstName() + " " + dto.userLastName() + ", \n" + "You have successfully booked your accommodation.";
         message.setText(content);
         mailSender.send(message);
-        log.info(EMAIL_SENT_LOG, Arrays.toString(message.getTo()));
+        log.info(EMAIL_SENT_LOG, NotificationType.SUCCESSFUL_RESERVATION, Arrays.toString(message.getTo()), "client");
 
-        Notification notification = new Notification(dto.userId(), dto.to(), dto.subject(), content, "SUCCESSFUL_RESERVATION_EMAIL", Instant.now());
+        Notification notification = new Notification(dto.userId(), dto.to(), dto.subject(), content, NotificationType.SUCCESSFUL_RESERVATION, Instant.now());
         notificationRepository.save(notification);
 
         Reservation reservation = new Reservation(dto.userId(), dto.reservationTime(),false, dto.to(), dto.userFirstName(), dto.userLastName());
@@ -133,12 +135,12 @@ public class NotificationServiceImpl implements NotificationService{
         message2.setTo(dto.managerEmail());
         message2.setSubject(dto.subject());
         String content2 = GREETING + dto.managerFirstName() + " " + dto.managerLastName() + ", \n" +
-                "Klijent " + dto.userFirstName() + " " + dto.userLastName() + " je uspesno rezervisao smestaj u vasem hotelu.";
+                "Client " + dto.userFirstName() + " " + dto.userLastName() + " has booked accommodation at your hotel.";
         message2.setText(content2);
         mailSender.send(message2);
-        log.info(EMAIL_SENT_LOG, Arrays.toString(message2.getTo()));
+        log.info(EMAIL_SENT_LOG, NotificationType.SUCCESSFUL_RESERVATION, Arrays.toString(message2.getTo()), "manager");
 
-        Notification notification2 = new Notification(dto.userId(), dto.managerEmail(), dto.subject(), content2, "SUCCESSFUL_RESERVATION_EMAIL", Instant.now());
+        Notification notification2 = new Notification(dto.userId(), dto.managerEmail(), dto.subject(), content2, NotificationType.SUCCESSFUL_RESERVATION, Instant.now());
         notificationRepository.save(notification2);
     }
 
@@ -148,12 +150,12 @@ public class NotificationServiceImpl implements NotificationService{
         message.setFrom(FROM_ADDRESS);
         message.setTo(dto.to());
         message.setSubject(dto.subject());
-        String content = GREETING + dto.userFirstName() + " " + dto.userLastName() + ", \n" + "Uspesno ste otkazali rezervaciju.";
+        String content = GREETING + dto.userFirstName() + " " + dto.userLastName() + ", \n" + "You have successfully cancelled your reservation.";
         message.setText(content);
         mailSender.send(message);
-        log.info(EMAIL_SENT_LOG, Arrays.toString(message.getTo()));
+        log.info(EMAIL_SENT_LOG, NotificationType.CANCEL_RESERVATION, Arrays.toString(message.getTo()), "client");
 
-        Notification notification = new Notification(dto.userId(), dto.to(), dto.subject(), content, "CANCEL_RESERVATION_EMAIL", Instant.now());
+        Notification notification = new Notification(dto.userId(), dto.to(), dto.subject(), content, NotificationType.CANCEL_RESERVATION, Instant.now());
         notificationRepository.save(notification);
 
         Reservation reservation = reservationRepository.findReservationByUserEmailAndUserFirstNameAndUserLastName(dto.to(), dto.userFirstName(), dto.managerLastName());
@@ -164,12 +166,12 @@ public class NotificationServiceImpl implements NotificationService{
         message2.setTo(dto.managerEmail());
         message2.setSubject(dto.subject());
         String content2 = GREETING + dto.managerFirstName() + " " + dto.managerLastName() + ", \n" +
-                "Klijent " + dto.userFirstName() + " " + dto.userLastName() + " je otkazao rezervaciju u vasem hotelu.";
+                "Client " + dto.userFirstName() + " " + dto.userLastName() + " has cancelled a reservation at your hotel.";
         message2.setText(content2);
         mailSender.send(message2);
-        log.info(EMAIL_SENT_LOG, Arrays.toString(message2.getTo()));
+        log.info(EMAIL_SENT_LOG, NotificationType.CANCEL_RESERVATION, Arrays.toString(message2.getTo()), "manager");
 
-        Notification notification2 = new Notification(dto.userId(), dto.managerEmail(), dto.subject(), content2, "CANCEL_RESERVATION_EMAIL", Instant.now());
+        Notification notification2 = new Notification(dto.userId(), dto.managerEmail(), dto.subject(), content2, NotificationType.CANCEL_RESERVATION, Instant.now());
         notificationRepository.save(notification2);
     }
 
@@ -182,12 +184,11 @@ public class NotificationServiceImpl implements NotificationService{
                     message.setTo(reservation.getUserEmail());
                     message.setSubject("2 days reminder");
                     String content = GREETING + reservation.getUserFirstName() + " " + reservation.getUserLastName() +
-                            ",\n" + "Podsecamo Vas da je Vasa rezervacija za 2 dana.";
+                            ",\n" + "This is a reminder that your reservation starts in 2 days.";
                     message.setText(content);
                     mailSender.send(message);
-        log.info(EMAIL_SENT_LOG, Arrays.toString(message.getTo()));
-
-                    Notification notification = new Notification(reservation.getUserId(), reservation.getUserEmail(), "2 days reminder", content, "TWO_DAYS_REMINDER_EMAIL", Instant.now());
+                    log.info(EMAIL_SENT_LOG, NotificationType.TWO_DAYS_REMINDER, Arrays.toString(message.getTo()), "client");
+                    Notification notification = new Notification(reservation.getUserId(), reservation.getUserEmail(), "2 days reminder", content, NotificationType.TWO_DAYS_REMINDER, Instant.now());
                     notificationRepository.save(notification);
 
                     reservation.setNotified(true);

@@ -6,7 +6,9 @@ import lombok.RequiredArgsConstructor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sk.hotelnotificationservice.domain.NotificationType;
 import com.sk.hotelnotificationservice.dto.NotificationDto;
+import com.sk.hotelnotificationservice.exception.UnknownNotificationTypeException;
 import com.sk.hotelnotificationservice.service.NotificationService;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.stereotype.Component;
@@ -30,13 +32,13 @@ public class MessageListener {
 
         log.info("Received notification message of type {} for user {}", dto.type(), dto.userId());
         switch (dto.type()) {
-            case "ACTIVATION_EMAIL" -> notificationService.sendActivationEmail(dto);
-            case "RESET_PASSWORD_EMAIL" -> notificationService.sendResetPasswordEmail(dto);
-            case "SUCCESSFUL_RESERVATION_EMAIL" -> notificationService.sendSuccessfulReservationEmail(dto);
-            case "CANCEL_RESERVATION_EMAIL" -> notificationService.sendCancelReservationEmail(dto);
+            case NotificationType.ACTIVATION -> notificationService.sendActivationEmail(dto);
+            case NotificationType.RESET_PASSWORD -> notificationService.sendResetPasswordEmail(dto);
+            case NotificationType.SUCCESSFUL_RESERVATION -> notificationService.sendSuccessfulReservationEmail(dto);
+            case NotificationType.CANCEL_RESERVATION -> notificationService.sendCancelReservationEmail(dto);
             default -> {
                 log.error("Unknown notification type: {}", dto.type());
-                throw new IllegalArgumentException("Unknown notification type: " + dto.type());
+                throw new UnknownNotificationTypeException("Unknown notification type: " + dto.type());
             }
         }
     }

@@ -9,7 +9,7 @@ public interface UserService {
     UserDto addClient(ClientCreateDto clientCreateDto);
     UserDto addManager(ManagerCreateDto managerCreateDto);
     TokenResponseDto login(TokenRequestDto tokenRequestDto);
-    boolean blockAccess(UserForbiddDto userForbiddDto);
+    boolean blockAccess(UserForbidDto userForbidDto);
     UserDto updateManager(ManagerUpdateDto managerUpdateDto);
     UserDto updateClient(ClientUpdateDto clientUpdateDto);
     DiscountDto findDiscount(Long id);

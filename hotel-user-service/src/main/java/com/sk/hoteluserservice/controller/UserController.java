@@ -54,9 +54,9 @@ public class UserController {
     @PostMapping("/forbidAccess")
     @CheckSecurity(roles = {"ROLE_ADMIN"})
     public ResponseEntity<Boolean> forbidAccess(@RequestHeader("Authorization") String authorization,
-                                                @RequestBody @Valid UserForbiddDto userForbiddDto) {
+                                                @RequestBody @Valid UserForbidDto userForbidDto) {
 
-        return new ResponseEntity<>(userService.blockAccess(userForbiddDto), HttpStatus.OK);
+        return new ResponseEntity<>(userService.blockAccess(userForbidDto), HttpStatus.OK);
     }
 
     @Operation(summary = "Register client")
@@ -88,11 +88,7 @@ public class UserController {
     @Operation(summary = "Login")
     @PostMapping("/login")
     public ResponseEntity<TokenResponseDto> loginUser(@RequestBody @Valid TokenRequestDto tokenRequestDto) {
-        TokenResponseDto tokenResponseDto = userService.login(tokenRequestDto);
-        if(tokenResponseDto != null){
-            return new ResponseEntity<>(tokenResponseDto, HttpStatus.OK);
-        }
-        return new ResponseEntity<>(null, HttpStatus.FORBIDDEN);
+        return new ResponseEntity<>(userService.login(tokenRequestDto), HttpStatus.OK);
     }
 
 }

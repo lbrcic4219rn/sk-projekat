@@ -9,6 +9,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sk.hoteluserservice.domain.ClientRank;
 import com.sk.hoteluserservice.domain.User;
 import com.sk.hoteluserservice.dto.*;
+import com.sk.hoteluserservice.exception.BlockedAccountException;
+import com.sk.hoteluserservice.exception.DuplicateResourceException;
+import com.sk.hoteluserservice.exception.InvalidCredentialsException;
 import com.sk.hoteluserservice.exception.NotFoundException;
 import com.sk.hoteluserservice.mapper.UserMapper;
 import com.sk.hoteluserservice.repository.ClientRankRepository;
@@ -43,7 +46,7 @@ public class UserServiceImpl implements UserService {
     private final ObjectMapper objectMapper;
 
     @Value("${destination.message}")
-    private String userRegistratedMessageDestination;
+    private String userRegisteredMessageDestination;
 
     @Override
     public Page<UserDto> findAll(Pageable pageable) {
@@ -53,10 +56,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto addClient(ClientCreateDto clientCreateDto) {
+        verifyUnique(clientCreateDto.username(), clientCreateDto.email());
         User user = userMapper.clientCreateDtoToUserClient(clientCreateDto);
         userRepository.save(user);
         try {
-            jmsTemplate.convertAndSend(userRegistratedMessageDestination,
+            jmsTemplate.convertAndSend(userRegisteredMessageDestination,
                     objectMapper.writeValueAsString(NotificationDto.builder()
                             .userId(user.getId())
                             .to(user.getEmail())
@@ -72,10 +76,11 @@ public class UserServiceImpl implements UserService {
     }
     @Override
     public UserDto addManager(ManagerCreateDto managerCreateDto) {
+        verifyUnique(managerCreateDto.username(), managerCreateDto.email());
         User user = userMapper.managerCreateDtoToUserManager(managerCreateDto);
         userRepository.save(user);
         try {
-            jmsTemplate.convertAndSend(userRegistratedMessageDestination,
+            jmsTemplate.convertAndSend(userRegisteredMessageDestination,
                     objectMapper.writeValueAsString(NotificationDto.builder()
                             .userId(user.getId())
                             .to(user.getEmail())
@@ -94,12 +99,10 @@ public class UserServiceImpl implements UserService {
     public TokenResponseDto login(TokenRequestDto tokenRequestDto) {
         User user = userRepository
                 .findUserByUsernameAndPassword(tokenRequestDto.username(), tokenRequestDto.password())
-                .orElseThrow(() -> new NotFoundException(String
-                        .format(USER_NOT_FOUND_BY_CREDENTIALS, tokenRequestDto.username(),
-                                tokenRequestDto.password())));
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid username or password."));
         if(user.isBlocked()){
             log.warn("Blocked user attempted login: username={}, email={}", tokenRequestDto.username(), user.getEmail());
-            return null;
+            throw new BlockedAccountException(String.format("Account %s is blocked.", tokenRequestDto.username()));
         }
         Claims claims = Jwts.claims()
                 .add("id", user.getId())
@@ -109,13 +112,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public boolean blockAccess(UserForbiddDto userForbiddDto) {
+    public boolean blockAccess(UserForbidDto userForbidDto) {
         User user = userRepository
-                .findUserByUsernameAndEmail(userForbiddDto.username(), userForbiddDto.email())
+                .findUserByUsernameAndEmail(userForbidDto.username(), userForbidDto.email())
                 .orElseThrow(() -> new NotFoundException(String
-                        .format("User with username: %s and email: %s not found.", userForbiddDto.username(),
-                                userForbiddDto.email())));
-        user.setBlocked(userForbiddDto.blocked());
+                        .format("User with username: %s and email: %s not found.", userForbidDto.username(),
+                                userForbidDto.email())));
+        user.setBlocked(userForbidDto.blocked());
         return true;
     }
 
@@ -217,4 +220,12 @@ public class UserServiceImpl implements UserService {
         return userMapper.userToUserDto(user);
     }
 
+    private void verifyUnique(String username, String email) {
+        if (userRepository.existsByUsername(username)) {
+            throw new DuplicateResourceException(String.format("Username %s is already taken.", username));
+        }
+        if (userRepository.existsByEmail(email)) {
+            throw new DuplicateResourceException(String.format("Email %s is already registered.", email));
+        }
+    }
 }
