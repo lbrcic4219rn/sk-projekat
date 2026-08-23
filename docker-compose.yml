@@ -50,8 +50,12 @@ services:
       - "8082:8082"
     environment:
       EUREKA_URI: http://eureka:8761/eureka
+      AMQ_URL: tcp://activemq:61616
+      USER_SERVICE_URI: http://users:8080/api
     depends_on:
       eureka:
+        condition: service_healthy
+      activemq:
         condition: service_healthy
 
   notifications:

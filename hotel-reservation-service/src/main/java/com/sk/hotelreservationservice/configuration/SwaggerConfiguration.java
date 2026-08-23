@@ -1,4 +1,4 @@
-package com.sk.hotelnotificationservice.configuration;
+package com.sk.hotelreservationservice.configuration;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
