@@ -25,7 +25,7 @@ public class TestDataRunner implements CommandLineRunner {
     private final ClientRankRepository clientRankRepository;
 
     @Override
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
         Role roleClient = new Role("ROLE_CLIENT", "Client role");
         Role roleAdmin = new Role("ROLE_ADMIN", "Admin role");
         Role roleManager = new Role("ROLE_MANAGER", "Manager_role");

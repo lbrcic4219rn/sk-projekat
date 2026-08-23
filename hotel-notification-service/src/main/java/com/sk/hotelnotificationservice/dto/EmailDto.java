@@ -1,19 +1,9 @@
 package com.sk.hotelnotificationservice.dto;
 
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-
-import lombok.Getter;
-import lombok.Setter;
-
 import jakarta.validation.constraints.Email;
+import lombok.Builder;
 
-@NoArgsConstructor
-@AllArgsConstructor
-@Getter
-@Setter
-public class EmailDto {
-    @Email
-    private String email;
-
+@Builder
+public record EmailDto(
+        @Email String email) {
 }

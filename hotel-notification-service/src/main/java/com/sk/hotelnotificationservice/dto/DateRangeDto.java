@@ -1,23 +1,11 @@
 package com.sk.hotelnotificationservice.dto;
 
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-
-import lombok.Getter;
-import lombok.Setter;
-
+import java.time.Instant;
+import lombok.Builder;
 import org.springframework.format.annotation.DateTimeFormat;
 
-import java.time.Instant;
-
-@NoArgsConstructor
-@AllArgsConstructor
-@Getter
-@Setter
-public class DateRangeDto {
-    @DateTimeFormat
-    private Instant startDate;
-    @DateTimeFormat
-    private Instant endDate;
-
+@Builder
+public record DateRangeDto(
+        @DateTimeFormat Instant startDate,
+        @DateTimeFormat Instant endDate) {
 }

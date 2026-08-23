@@ -1,19 +1,12 @@
 package com.sk.hoteluserservice.dto;
 
-import lombok.Getter;
-import lombok.Setter;
-
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import lombok.Builder;
 
-@Getter
-@Setter
-public class UserForbiddDto {
-
-    @Email
-    private String email;
-    @NotBlank
-    private String username;
-    private boolean blocked;
-
+@Builder
+public record UserForbiddDto(
+        @Email String email,
+        @NotBlank String username,
+        boolean blocked) {
 }

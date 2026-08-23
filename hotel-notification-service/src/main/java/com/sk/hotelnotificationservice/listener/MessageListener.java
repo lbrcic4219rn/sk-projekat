@@ -28,15 +28,15 @@ public class MessageListener {
         String json = ((TextMessage)message).getText();
         NotificationDto dto = objectMapper.readValue(json, NotificationDto.class);
 
-        log.info("Received notification message of type {} for user {}", dto.getType(), dto.getUserId());
-        switch (dto.getType()) {
+        log.info("Received notification message of type {} for user {}", dto.type(), dto.userId());
+        switch (dto.type()) {
             case "ACTIVATION_EMAIL" -> notificationService.sendActivationEmail(dto);
             case "RESET_PASSWORD_EMAIL" -> notificationService.sendResetPasswordEmail(dto);
             case "SUCCESSFUL_RESERVATION_EMAIL" -> notificationService.sendSuccessfulReservationEmail(dto);
             case "CANCEL_RESERVATION_EMAIL" -> notificationService.sendCancelReservationEmail(dto);
             default -> {
-                log.error("Unknown notification type: {}", dto.getType());
-                throw new IllegalArgumentException("Unknown notification type: " + dto.getType());
+                log.error("Unknown notification type: {}", dto.type());
+                throw new IllegalArgumentException("Unknown notification type: " + dto.type());
             }
         }
     }

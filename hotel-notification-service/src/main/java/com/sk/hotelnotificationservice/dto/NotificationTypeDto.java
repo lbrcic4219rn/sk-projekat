@@ -1,19 +1,9 @@
 package com.sk.hotelnotificationservice.dto;
 
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-
-import lombok.Getter;
-import lombok.Setter;
-
 import jakarta.validation.constraints.NotBlank;
+import lombok.Builder;
 
-@NoArgsConstructor
-@AllArgsConstructor
-@Getter
-@Setter
-public class NotificationTypeDto {
-    @NotBlank
-    private String type;
-
+@Builder
+public record NotificationTypeDto(
+        @NotBlank String type) {
 }

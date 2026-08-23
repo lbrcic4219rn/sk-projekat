@@ -48,7 +48,7 @@ public class NotificationController {
     @CheckSecurity(roles = {"ROLE_ADMIN"})
     public ResponseEntity<Page<Notification>> getNotificationsByType(@RequestHeader("Authorization") String authorization,
                                                                      @RequestBody @Valid NotificationTypeDto dto, Pageable pageable) {
-        List<Notification> notifications = notificationService.findNotificationsByType(dto.getType());
+        List<Notification> notifications = notificationService.findNotificationsByType(dto.type());
         Page<Notification> p = new PageImpl<>(notifications, pageable, notifications.size());
         return new ResponseEntity<>(p, HttpStatus.OK);
     }
@@ -57,7 +57,7 @@ public class NotificationController {
     @CheckSecurity(roles = {"ROLE_ADMIN"})
     public ResponseEntity<Page<Notification>> getNotificationsByEmail(@RequestHeader("Authorization") String authorization,
                                                                      @RequestBody @Valid EmailDto dto, Pageable pageable) {
-        List<Notification> notifications = notificationService.findNotificationsByEmail(dto.getEmail());
+        List<Notification> notifications = notificationService.findNotificationsByEmail(dto.email());
         Page<Notification> p = new PageImpl<>(notifications, pageable, notifications.size());
         return new ResponseEntity<>(p, HttpStatus.OK);
     }
@@ -66,7 +66,7 @@ public class NotificationController {
     @CheckSecurity(roles = {"ROLE_ADMIN"})
     public ResponseEntity<Page<Notification>> getNotificationsInDateRange(@RequestHeader("Authorization") String authorization,
                                                                           @RequestBody @Valid DateRangeDto dto, Pageable pageable) {
-        List<Notification> notifications = notificationService.findNotificationsInDateRange(dto.getStartDate(), dto.getEndDate());
+        List<Notification> notifications = notificationService.findNotificationsInDateRange(dto.startDate(), dto.endDate());
         Page<Notification> p = new PageImpl<>(notifications, pageable, notifications.size());
         return new ResponseEntity<>(p, HttpStatus.OK);
     }

@@ -25,7 +25,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -58,8 +57,14 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
         try {
             jmsTemplate.convertAndSend(userRegistratedMessageDestination,
-                    objectMapper.writeValueAsString(new NotificationDto(user.getId(), user.getEmail(), "activation email",
-                            "ACTIVATION_EMAIL", user.getFirstname(), user.getLastname())));
+                    objectMapper.writeValueAsString(NotificationDto.builder()
+                            .userId(user.getId())
+                            .to(user.getEmail())
+                            .subject("activation email")
+                            .type("ACTIVATION_EMAIL")
+                            .userFirstName(user.getFirstname())
+                            .userLastName(user.getLastname())
+                            .build()));
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize notification for user {}", user.getId(), e);
         }
@@ -71,8 +76,14 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
         try {
             jmsTemplate.convertAndSend(userRegistratedMessageDestination,
-                    objectMapper.writeValueAsString(new NotificationDto(user.getId(), user.getEmail(), "activation email",
-                            "ACTIVATION_EMAIL", user.getFirstname(), user.getLastname())));
+                    objectMapper.writeValueAsString(NotificationDto.builder()
+                            .userId(user.getId())
+                            .to(user.getEmail())
+                            .subject("activation email")
+                            .type("ACTIVATION_EMAIL")
+                            .userFirstName(user.getFirstname())
+                            .userLastName(user.getLastname())
+                            .build()));
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize notification for user {}", user.getId(), e);
         }
@@ -82,12 +93,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public TokenResponseDto login(TokenRequestDto tokenRequestDto) {
         User user = userRepository
-                .findUserByUsernameAndPassword(tokenRequestDto.getUsername(), tokenRequestDto.getPassword())
+                .findUserByUsernameAndPassword(tokenRequestDto.username(), tokenRequestDto.password())
                 .orElseThrow(() -> new NotFoundException(String
-                        .format(USER_NOT_FOUND_BY_CREDENTIALS, tokenRequestDto.getUsername(),
-                                tokenRequestDto.getPassword())));
+                        .format(USER_NOT_FOUND_BY_CREDENTIALS, tokenRequestDto.username(),
+                                tokenRequestDto.password())));
         if(user.isBlocked()){
-            log.warn("Blocked user attempted login: username={}, email={}", tokenRequestDto.getUsername(), user.getEmail());
+            log.warn("Blocked user attempted login: username={}, email={}", tokenRequestDto.username(), user.getEmail());
             return null;
         }
         Claims claims = Jwts.claims()
@@ -100,29 +111,29 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean blockAccess(UserForbiddDto userForbiddDto) {
         User user = userRepository
-                .findUserByUsernameAndEmail(userForbiddDto.getUsername(), userForbiddDto.getEmail())
+                .findUserByUsernameAndEmail(userForbiddDto.username(), userForbiddDto.email())
                 .orElseThrow(() -> new NotFoundException(String
-                        .format("User with username: %s and email: %s not found.", userForbiddDto.getUsername(),
-                                userForbiddDto.getEmail())));
-        user.setBlocked(userForbiddDto.isBlocked());
+                        .format("User with username: %s and email: %s not found.", userForbiddDto.username(),
+                                userForbiddDto.email())));
+        user.setBlocked(userForbiddDto.blocked());
         return true;
     }
 
     @Override
     public UserDto updateManager(ManagerUpdateDto managerUpdateDto) {
         User user = userRepository
-                .findUserByUsernameAndPassword(managerUpdateDto.getOldUsername(), managerUpdateDto.getOldPassword())
+                .findUserByUsernameAndPassword(managerUpdateDto.oldUsername(), managerUpdateDto.oldPassword())
                 .orElseThrow(() -> new NotFoundException(String
-                        .format(USER_NOT_FOUND_BY_CREDENTIALS, managerUpdateDto.getOldUsername(),
-                                managerUpdateDto.getOldPassword())));
-        user.setUsername(managerUpdateDto.getNewUsername());
-        user.setPassword(managerUpdateDto.getNewPassword());
-        user.setEmail(managerUpdateDto.getNewEmail());
-        user.setPhone(managerUpdateDto.getNewPhone());
-        user.setFirstname(managerUpdateDto.getNewFirstName());
-        user.setLastname(managerUpdateDto.getNewLastName());
-        user.setHotelName(managerUpdateDto.getNewHotelName());
-        user.setHireDate(managerUpdateDto.getNewHireDate());
+                        .format(USER_NOT_FOUND_BY_CREDENTIALS, managerUpdateDto.oldUsername(),
+                                managerUpdateDto.oldPassword())));
+        user.setUsername(managerUpdateDto.newUsername());
+        user.setPassword(managerUpdateDto.newPassword());
+        user.setEmail(managerUpdateDto.newEmail());
+        user.setPhone(managerUpdateDto.newPhone());
+        user.setFirstname(managerUpdateDto.newFirstName());
+        user.setLastname(managerUpdateDto.newLastName());
+        user.setHotelName(managerUpdateDto.newHotelName());
+        user.setHireDate(managerUpdateDto.newHireDate());
 
         return userMapper.userToUserDto(user);
     }
@@ -130,18 +141,18 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto updateClient(ClientUpdateDto clientUpdateDto) {
         User user = userRepository
-                .findUserByUsernameAndPassword(clientUpdateDto.getOldUsername(), clientUpdateDto.getOldPassword())
+                .findUserByUsernameAndPassword(clientUpdateDto.oldUsername(), clientUpdateDto.oldPassword())
                 .orElseThrow(() -> new NotFoundException(String
-                        .format(USER_NOT_FOUND_BY_CREDENTIALS, clientUpdateDto.getOldUsername(),
-                                clientUpdateDto.getOldPassword())));
-        user.setUsername(clientUpdateDto.getNewUsername());
-        user.setPassword(clientUpdateDto.getNewPassword());
-        user.setEmail(clientUpdateDto.getNewEmail());
-        user.setPhone(clientUpdateDto.getNewPhone());
-        user.setFirstname(clientUpdateDto.getNewFirstName());
-        user.setLastname(clientUpdateDto.getNewLastName());
-        user.setNumberOfReservations(clientUpdateDto.getNewNumberOfReservations());
-        user.setPassportNumber(clientUpdateDto.getNewPassportNumber());
+                        .format(USER_NOT_FOUND_BY_CREDENTIALS, clientUpdateDto.oldUsername(),
+                                clientUpdateDto.oldPassword())));
+        user.setUsername(clientUpdateDto.newUsername());
+        user.setPassword(clientUpdateDto.newPassword());
+        user.setEmail(clientUpdateDto.newEmail());
+        user.setPhone(clientUpdateDto.newPhone());
+        user.setFirstname(clientUpdateDto.newFirstName());
+        user.setLastname(clientUpdateDto.newLastName());
+        user.setNumberOfReservations(clientUpdateDto.newNumberOfReservations());
+        user.setPassportNumber(clientUpdateDto.newPassportNumber());
 
         return userMapper.userToUserDto(user);
     }
@@ -158,7 +169,7 @@ public class UserServiceImpl implements UserService {
                 .filter(clientRank -> clientRank.getMaxNumberOfReservations() >= user.getNumberOfReservations()
                         && clientRank.getMinNumberOfReservations() <= user.getNumberOfReservations())
                 .findAny()
-                .get()
+                .orElseThrow(() -> new NotFoundException("Discount not found."))
                 .getDiscount();
         return new DiscountDto(discount);
     }

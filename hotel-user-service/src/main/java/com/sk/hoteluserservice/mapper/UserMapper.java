@@ -1,70 +1,81 @@
 package com.sk.hoteluserservice.mapper;
 
-import lombok.RequiredArgsConstructor;
 
 import com.sk.hoteluserservice.domain.User;
+import org.springframework.http.HttpStatus;
+import com.sk.hoteluserservice.exception.ErrorCode;
+import com.sk.hoteluserservice.exception.CustomException;
+import com.sk.hoteluserservice.domain.Role;
 import com.sk.hoteluserservice.dto.ClientCreateDto;
 import com.sk.hoteluserservice.dto.ManagerCreateDto;
 import com.sk.hoteluserservice.dto.UserDto;
 import com.sk.hoteluserservice.repository.RoleRepository;
 import org.springframework.stereotype.Component;
 
-@RequiredArgsConstructor
 @Component
-public class UserMapper {
+public record UserMapper(RoleRepository roleRepository) {
 
-        private final RoleRepository roleRepository;
+        private static final String ROLE_CLIENT = "ROLE_CLIENT";
+        private static final String ROLE_MANAGER = "ROLE_MANAGER";
+
 
         public UserDto userToUserDto(User user) {
-            UserDto userDto = new UserDto();
-            userDto.setId(user.getId());
-            userDto.setEmail(user.getEmail());
-            userDto.setFirstName(user.getFirstname());
-            userDto.setLastName(user.getLastname());
-            userDto.setUsername(user.getUsername());
-            userDto.setBirthDate(user.getBirthDate());
-            userDto.setPhone(user.getPhone());
-            userDto.setPassportNumber(user.getPassportNumber());
-            userDto.setNumberOfReservations(user.getNumberOfReservations());
-            userDto.setHotelName(user.getHotelName());
-            userDto.setHireDate(user.getHireDate());
-            return userDto;
+            return UserDto.builder()
+                    .id(user.getId())
+                    .email(user.getEmail())
+                    .firstName(user.getFirstname())
+                    .lastName(user.getLastname())
+                    .username(user.getUsername())
+                    .birthDate(user.getBirthDate())
+                    .phone(user.getPhone())
+                    .passportNumber(user.getPassportNumber())
+                    .numberOfReservations(user.getNumberOfReservations())
+                    .hotelName(user.getHotelName())
+                    .hireDate(user.getHireDate())
+                    .build();
         }
 
         public User clientCreateDtoToUserClient(ClientCreateDto clientCreateDto) {
             User user = new User();
-            user.setEmail(clientCreateDto.getEmail());
-            user.setFirstname(clientCreateDto.getFirstName());
-            user.setLastname(clientCreateDto.getLastName());
-            user.setUsername(clientCreateDto.getUsername());
-            user.setPassword(clientCreateDto.getPassword());
+            user.setEmail(clientCreateDto.email());
+            user.setFirstname(clientCreateDto.firstName());
+            user.setLastname(clientCreateDto.lastName());
+            user.setUsername(clientCreateDto.username());
+            user.setPassword(clientCreateDto.password());
 
-            user.setBirthDate(clientCreateDto.getBirthDate());
-            user.setPhone(clientCreateDto.getPhone());
-            user.setPassportNumber(clientCreateDto.getPassportNumber());
-            user.setNumberOfReservations(clientCreateDto.getNumberOfReservations());
+            user.setBirthDate(clientCreateDto.birthDate());
+            user.setPhone(clientCreateDto.phone());
+            user.setPassportNumber(clientCreateDto.passportNumber());
+            user.setNumberOfReservations(clientCreateDto.numberOfReservations());
 
-            user.setRole(roleRepository.findRoleByName("ROLE_CLIENT").get());
+            user.setRole(role(ROLE_CLIENT));
             user.setNumberOfReservations(0);
 
             return user;
         }
         public User managerCreateDtoToUserManager(ManagerCreateDto managerCreateDto) {
             User user = new User();
-            user.setEmail(managerCreateDto.getEmail());
-            user.setFirstname(managerCreateDto.getFirstName());
-            user.setLastname(managerCreateDto.getLastName());
-            user.setUsername(managerCreateDto.getUsername());
-            user.setPassword(managerCreateDto.getPassword());
+            user.setEmail(managerCreateDto.email());
+            user.setFirstname(managerCreateDto.firstName());
+            user.setLastname(managerCreateDto.lastName());
+            user.setUsername(managerCreateDto.username());
+            user.setPassword(managerCreateDto.password());
 
-            user.setBirthDate(managerCreateDto.getBirthDate());
-            user.setPhone(managerCreateDto.getPhone());
-            user.setHotelName(managerCreateDto.getHotelName());
-            user.setHireDate(managerCreateDto.getHireDate());
+            user.setBirthDate(managerCreateDto.birthDate());
+            user.setPhone(managerCreateDto.phone());
+            user.setHotelName(managerCreateDto.hotelName());
+            user.setHireDate(managerCreateDto.hireDate());
 
-            user.setRole(roleRepository.findRoleByName("ROLE_MANAGER").get());
+            user.setRole(role(ROLE_MANAGER));
             user.setNumberOfReservations(0);
 
             return user;
+        }
+
+        private Role role(String name) {
+            return roleRepository.findRoleByName(name)
+                    .orElseThrow(() -> new CustomException(
+                            String.format("Role %s is not configured.", name),
+                            ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.INTERNAL_SERVER_ERROR));
         }
 }
