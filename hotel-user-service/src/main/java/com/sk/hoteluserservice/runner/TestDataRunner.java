@@ -1,5 +1,9 @@
 package com.sk.hoteluserservice.runner;
 
+import lombok.RequiredArgsConstructor;
+
+import java.time.LocalDate;
+
 import com.sk.hoteluserservice.domain.ClientRank;
 import com.sk.hoteluserservice.domain.Rank;
 import com.sk.hoteluserservice.domain.Role;
@@ -11,22 +15,14 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import java.util.Calendar;
-import java.util.GregorianCalendar;
-
+@RequiredArgsConstructor
 @Profile({"default"})
 @Component
 public class TestDataRunner implements CommandLineRunner {
 
-    private RoleRepository roleRepository;
-    private UserRepository userRepository;
-    private ClientRankRepository clientRankRepository;
-
-    public TestDataRunner(RoleRepository roleRepository, UserRepository userRepository, ClientRankRepository clientRankRepository) {
-        this.roleRepository = roleRepository;
-        this.userRepository = userRepository;
-        this.clientRankRepository = clientRankRepository;
-    }
+    private final RoleRepository roleRepository;
+    private final UserRepository userRepository;
+    private final ClientRankRepository clientRankRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -46,7 +42,7 @@ public class TestDataRunner implements CommandLineRunner {
         admin.setRole(roleAdmin);
         admin.setFirstname("Takola");
         admin.setLastname("Nikolic");
-        admin.setBirthDate(new GregorianCalendar(2000, Calendar.FEBRUARY, 11).getTime());
+        admin.setBirthDate(LocalDate.of(2000, 2, 11));
         admin.setPhone("0648983312");
 
         userRepository.save(admin);

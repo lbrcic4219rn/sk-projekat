@@ -1,5 +1,7 @@
 package com.sk.hotelnotificationservice.security;
 
+import lombok.RequiredArgsConstructor;
+
 import com.sk.hotelnotificationservice.security.service.TokenService;
 import io.jsonwebtoken.Claims;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -13,7 +15,9 @@ import org.springframework.http.ResponseEntity;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Optional;
 
+@RequiredArgsConstructor
 @Aspect
 @Configuration
 public class SecurityAspect {
@@ -21,11 +25,7 @@ public class SecurityAspect {
     @Value("${oauth.jwt.secret}")
     private String jwtSecret;
 
-    private TokenService tokenService;
-
-    public SecurityAspect(TokenService tokenService) {
-        this.tokenService = tokenService;
-    }
+    private final TokenService tokenService;
 
     @Around("@annotation(com.sk.hotelnotificationservice.security.CheckSecurity)")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
@@ -48,11 +48,12 @@ public class SecurityAspect {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         //Try to parse token
-        Claims claims = tokenService.parseToken(token);
+        Optional<Claims> parsedClaims = tokenService.parseToken(token);
         //If fails return UNAUTHORIZED response
-        if (claims == null) {
+        if (parsedClaims.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
+        Claims claims = parsedClaims.get();
         //Check user role and proceed if user has appropriate role for specified route
         CheckSecurity checkSecurity = method.getAnnotation(CheckSecurity.class);
         String role = claims.get("role", String.class);

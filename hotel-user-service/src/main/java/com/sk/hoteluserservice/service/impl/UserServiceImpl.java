@@ -1,5 +1,7 @@
 package com.sk.hoteluserservice.service.impl;
 
+import lombok.RequiredArgsConstructor;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sk.hoteluserservice.domain.ClientRank;
@@ -23,29 +25,20 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
+@RequiredArgsConstructor
 @Service
 @Transactional
 public class UserServiceImpl implements UserService {
 
-    private TokenService tokenService;
-    private UserRepository userRepository;
-    private ClientRankRepository clientRankRepository;
-    private UserMapper userMapper;
-    private JmsTemplate jmsTemplate;
-    private ObjectMapper objectMapper;
-    private String userRegistratedMessageDestination;
+    private final TokenService tokenService;
+    private final UserRepository userRepository;
+    private final ClientRankRepository clientRankRepository;
+    private final UserMapper userMapper;
+    private final JmsTemplate jmsTemplate;
+    private final ObjectMapper objectMapper;
 
-    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper, TokenService tokenService,
-                           ClientRankRepository clientRankRepository, JmsTemplate jmsTemplate,
-                           ObjectMapper objectMapper, @Value("${destination.message}")String userRegistratedMessageDestination) {
-        this.userRepository = userRepository;
-        this.userMapper = userMapper;
-        this.tokenService = tokenService;
-        this.clientRankRepository = clientRankRepository;
-        this.jmsTemplate = jmsTemplate;
-        this.objectMapper = objectMapper;
-        this.userRegistratedMessageDestination = userRegistratedMessageDestination;
-    }
+    @Value("${destination.message}")
+    private String userRegistratedMessageDestination;
 
     @Override
     public Page<UserDto> findAll(Pageable pageable) {
@@ -95,9 +88,10 @@ public class UserServiceImpl implements UserService {
             return null;
         }
         //Create token payload
-        Claims claims = Jwts.claims();
-        claims.put("id", user.getId());
-        claims.put("role", user.getRole().getName());
+        Claims claims = Jwts.claims()
+                .add("id", user.getId())
+                .add("role", user.getRole().getName())
+                .build();
         //Generate token
         return new TokenResponseDto(tokenService.generate(claims));
     }
@@ -173,7 +167,8 @@ public class UserServiceImpl implements UserService {
         //auth[0] = "Bearer" -> zato splitujemo authorization
         String[] auth = authorization.split(" ");
         String token = auth[1];
-        Claims claims = tokenService.parseToken(token);
+        Claims claims = tokenService.parseToken(token)
+                .orElseThrow(() -> new NotFoundException("Invalid token."));
         Integer intId = claims.get("id", Integer.class);
         Long userId = Long.valueOf(intId);
 
@@ -191,7 +186,8 @@ public class UserServiceImpl implements UserService {
         //auth[0] = "Bearer" -> zato splitujemo authorization
         String[] auth = authorization.split(" ");
         String token = auth[1];
-        Claims claims = tokenService.parseToken(token);
+        Claims claims = tokenService.parseToken(token)
+                .orElseThrow(() -> new NotFoundException("Invalid token."));
         Integer intId = claims.get("id", Integer.class);
         Long userId = Long.valueOf(intId);
 
@@ -209,6 +205,5 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id).get();
         return userMapper.userToUserDto(user);
     }
-
 
 }

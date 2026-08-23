@@ -3,9 +3,13 @@ package com.sk.hoteluserservice.security.service.impl;
 import com.sk.hoteluserservice.security.service.TokenService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import javax.crypto.SecretKey;
+import java.util.Optional;
 
 @Service
 public class TokenServiceImpl implements TokenService {
@@ -16,22 +20,25 @@ public class TokenServiceImpl implements TokenService {
     @Override
     public String generate(Claims claims) {
         return Jwts.builder()
-                .setClaims(claims)
-                .signWith(SignatureAlgorithm.HS512, jwtSecret)
+                .claims(claims)
+                .signWith(key())
                 .compact();
     }
 
     @Override
-    public Claims parseToken(String jwt) {
-        Claims claims;
+    public Optional<Claims> parseToken(String jwt) {
         try {
-            claims = Jwts.parser()
-                    .setSigningKey(jwtSecret)
-                    .parseClaimsJws(jwt)
-                    .getBody();
+            return Optional.of(Jwts.parser()
+                    .verifyWith(key())
+                    .build()
+                    .parseSignedClaims(jwt)
+                    .getPayload());
         } catch (Exception e) {
-            return null;
+            return Optional.empty();
         }
-        return claims;
+    }
+
+    private SecretKey key() {
+        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
     }
 }

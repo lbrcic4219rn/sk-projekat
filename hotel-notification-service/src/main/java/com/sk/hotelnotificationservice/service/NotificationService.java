@@ -6,12 +6,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.List;
 
 @Component
 public interface NotificationService {
-    List<Notification> findNotificationsInDateRange(Date endDate, Date startDate);
+    List<Notification> findNotificationsInDateRange(Instant endDate, Instant startDate);
     List<Notification> findNotificationsByEmail(String email);
     List<Notification> findNotificationsByType(String notificationType);
 

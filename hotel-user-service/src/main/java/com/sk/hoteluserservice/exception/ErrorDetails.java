@@ -1,9 +1,19 @@
 package com.sk.hoteluserservice.exception;
 
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+
+import lombok.Getter;
+import lombok.Setter;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.Instant;
 
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
 public class ErrorDetails {
 
     @JsonProperty("error_code")
@@ -12,37 +22,4 @@ public class ErrorDetails {
     private String errorMessage;
     private Instant timestamp;
 
-    public ErrorDetails() {
-
-    }
-
-    public ErrorDetails(ErrorCode errorCode, String errorMessage, Instant timestamp) {
-        this.errorCode = errorCode;
-        this.errorMessage = errorMessage;
-        this.timestamp = timestamp;
-    }
-
-    public ErrorCode getErrorCode() {
-        return errorCode;
-    }
-
-    public void setErrorCode(ErrorCode errorCode) {
-        this.errorCode = errorCode;
-    }
-
-    public String getErrorMessage() {
-        return errorMessage;
-    }
-
-    public void setErrorMessage(String errorMessage) {
-        this.errorMessage = errorMessage;
-    }
-
-    public Instant getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(Instant timestamp) {
-        this.timestamp = timestamp;
-    }
 }

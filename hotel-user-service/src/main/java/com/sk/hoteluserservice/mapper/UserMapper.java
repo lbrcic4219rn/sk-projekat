@@ -1,5 +1,7 @@
 package com.sk.hoteluserservice.mapper;
 
+import lombok.RequiredArgsConstructor;
+
 import com.sk.hoteluserservice.domain.User;
 import com.sk.hoteluserservice.dto.ClientCreateDto;
 import com.sk.hoteluserservice.dto.ManagerCreateDto;
@@ -7,14 +9,11 @@ import com.sk.hoteluserservice.dto.UserDto;
 import com.sk.hoteluserservice.repository.RoleRepository;
 import org.springframework.stereotype.Component;
 
+@RequiredArgsConstructor
 @Component
 public class UserMapper {
 
-        private RoleRepository roleRepository;
-
-        public UserMapper(RoleRepository roleRepository) {
-            this.roleRepository = roleRepository;
-        }
+        private final RoleRepository roleRepository;
 
         public UserDto userToUserDto(User user) {
             UserDto userDto = new UserDto();
